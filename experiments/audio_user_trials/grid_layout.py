@@ -8,6 +8,7 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt4 import QtCore, QtGui
+from grid_widget import letterGrid
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -91,7 +92,7 @@ class Ui_MainWindow(object):
         self.label_word_output.setFont(font)
         self.label_word_output.setTextFormat(QtCore.Qt.PlainText)
         self.label_word_output.setObjectName(_fromUtf8("label_word_output"))
-        self.gridLayout_6.addWidget(self.label_word_output, 7, 0, 1, 1)
+        self.gridLayout_6.addWidget(self.label_word_output, 8, 0, 1, 1)
         self.selected_words_disp = QtGui.QTextEdit(self.centralwidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -109,7 +110,7 @@ class Ui_MainWindow(object):
         self.selected_words_disp.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.selected_words_disp.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.selected_words_disp.setObjectName(_fromUtf8("selected_words_disp"))
-        self.gridLayout_6.addWidget(self.selected_words_disp, 8, 0, 1, 1)
+        self.gridLayout_6.addWidget(self.selected_words_disp, 9, 0, 1, 1)
         self.gridLayout = QtGui.QGridLayout()
         self.gridLayout.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
@@ -172,10 +173,10 @@ class Ui_MainWindow(object):
         self.phrase_disp = QtGui.QTextEdit(self.centralwidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(50)
+        sizePolicy.setVerticalStretch(10)
         sizePolicy.setHeightForWidth(self.phrase_disp.sizePolicy().hasHeightForWidth())
         self.phrase_disp.setSizePolicy(sizePolicy)
-        self.phrase_disp.setMinimumSize(QtCore.QSize(500, 50))
+        self.phrase_disp.setMinimumSize(QtCore.QSize(100, 50))
         font = QtGui.QFont()
         font.setFamily(_fromUtf8("Monospace"))
         font.setPointSize(18)
@@ -186,11 +187,16 @@ class Ui_MainWindow(object):
 "border-width:5px;\n"
 ""))
         self.phrase_disp.setObjectName(_fromUtf8("phrase_disp"))
+
         self.gridLayout_6.addWidget(self.phrase_disp, 6, 0, 1, 1)
+        self.letter_grid = letterGrid(self)
+        self.gridLayout_6.addWidget(self.letter_grid, 7, 0, 1, 1)
+        self.gridLayout_6.setRowStretch(7, 50)
+
         self.label_phrases = QtGui.QLabel(self.centralwidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(10)
+        sizePolicy.setVerticalStretch(1)
         sizePolicy.setHeightForWidth(self.label_phrases.sizePolicy().hasHeightForWidth())
         self.label_phrases.setSizePolicy(sizePolicy)
         font = QtGui.QFont()

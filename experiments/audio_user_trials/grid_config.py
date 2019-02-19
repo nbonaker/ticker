@@ -1,5 +1,5 @@
 
-import cPickle, pylab, os, sys
+import cPickle, pylab, os, sys, shutil
 import numpy as np
 from PyQt4 import QtCore, QtGui
 sys.path.append("../../")   
@@ -21,8 +21,10 @@ class ChannelConfig(FileLoader):
           the directories voice_recordings and config are in this directory
         * i_scan_delay: scan delay in seconds"""
                          
-    def __init__(self , i_scan_delay, i_root_dir="./", i_nticks=1, i_display=False):
+    def __init__(self , parent, i_scan_delay, i_root_dir="./", i_nticks=1, i_display=False):
+
         self.utils = Utils()
+        self.parent = parent
         self.display = i_display
         self.nchannels = 1 
         FileLoader.__init__(self, i_root_dir)
@@ -35,14 +37,20 @@ class ChannelConfig(FileLoader):
         self.letter_times.load( alphabet, i_scan_delay)
         self.scan_delay = i_scan_delay
         self.config = {}
-        self.config_seq = np.array(['a','e','i','o','u'])
-        self.config['a'] = 'abcd_$'
-        self.config['e'] = 'efgh.'
-        self.config['i'] = 'ijklmn'
-        self.config['o'] = 'opqrst'
-        self.config['u'] = 'uvwxyz'
+        self.config_seq = self.parent.key_grid[0]
+        for i in range(len(self.config_seq)):
+            key = self.config_seq[i]
+            self.config[key] = self.parent.col_scans[i]
+        # self.config['e'] = 'e-f-g-h-.-,'
+        # self.config['i'] = 'i-j-k-l-m-n'
+        # self.config['o'] = 'o-p-q-r-s-t'
+        # self.config['u'] = 'u-v-w-x-y-z'
+        # self.config['66'] = '66-77-88-99-00'
+
         
-    ########################## Main functions 
+    ########################## Main functions
+
+
     
     def setLetterTimes(self, i_times):
         #The times at which the user is expected to click can be set manually
@@ -172,7 +180,11 @@ class AlphabetLoader(FileLoader):
         file_name.close()
         alphabet = alphabet.split('\n')[0]
         alphabet = alphabet.split(" ")[0]
-        alphabet = [letter for letter in alphabet if not (letter == '') ]
+        alphabet = alphabet.split('-')
+        if '' in alphabet:
+            alphabet.remove('')
+        # alphabet = [letter for letter in alphabet if not (letter == '') ]
+        print(alphabet)
         array_alphabet = np.array(alphabet)
         repeat = np.array([len(np.nonzero(array_alphabet == letter)[0]) for letter in alphabet if not( letter == '*') ])
         idx = np.nonzero(repeat == repeat[0])[0]
@@ -243,7 +255,13 @@ class ConfigExamples():
         max_row_skips = len(ch_seq)+self.channel_config.getNumberOfPreTicks()
         for letter in i_word:
             for (row, row_letter) in enumerate(ch_seq):
-                col_seq = np.array(list(self.channel_config.config[row_letter]))
+                col_seq = self.channel_config.config[row_letter]
+                col_seq = col_seq.split('\n')[0]
+                col_seq = col_seq.split(" ")[0]
+                col_seq = col_seq.split('-')
+                if '' in col_seq:
+                    col_seq.remove('')
+                col_seq = np.array(col_seq)
                 idx = np.nonzero(col_seq == letter)[0]
                 if len(idx) > 0:
                     n_ticks = self.channel_config.getNumberOfPreTicks()

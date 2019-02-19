@@ -1,5 +1,6 @@
- 
-import audio, time, os, subprocess
+import os
+os.chdir("/home/nicholasbonaker/PycharmProjects/ticker")
+import audio, time, subprocess
 import numpy as np
  
 class Audio():
@@ -36,6 +37,7 @@ class Audio():
         else:
             self.festival = ['text2wave', self.talk_file, '-o', self.synthesis_file]
             #self.festival = ['/usr/bin/festival', '--tts', self.talk_file]
+        self.current_letter = None
          
     def initDirectories(self, i_root_dir=None):
         if i_root_dir is None:
@@ -60,28 +62,30 @@ class Audio():
         self.resetInstructions()
        
     def setTicks(self, i_nticks):
-        audio.setTicks(i_nticks)
-    
+        # audio.setTicks(i_nticks)
+        pass
+
     def setPause(self, i_pause):
         self.pause = i_pause
         
     def setVolume(self, i_val, i_channel):
-        audio.setVolume(np.float64(i_val), np.int32(i_channel))
+        # audio.setVolume(np.float64(i_val), np.int32(i_channel))
+        pass
     
     def setAlphabetDir(self, i_alphabet_dir):
         audio.setAlphabetDir(i_alphabet_dir)
         
     def setConfigDir(self, i_config_dir):
         audio.setConfigDir(i_config_dir)
-        
+
     ##################################### Get functions
     
     def isPlayingInstructions(self):
-        return  len(self.instructions) > 0
+        return len(self.instructions) > 0
     
     def isReady(self):
         return audio.isReady()
-    
+
     def getSoundIndex(self, i_channel_config):
         n_ticks = i_channel_config.getNumberOfPreTicks()
         idx = self.sound_index - n_ticks
@@ -100,7 +104,9 @@ class Audio():
         if utterance[-1] == "_":
             utterance = utterance[0:-1] 
         if utterance == '.':
-            utterance = "fullstop"  
+            utterance = "fullstop"
+        if utterance == ',':
+            utterance = "fullstop"
         elif(utterance == 'a'):
             utterance = 'ay'
         elif(utterance == 'the'):
@@ -138,20 +144,20 @@ class Audio():
         self.synthesise(utterance)
         
     def playNext(self, i_loop=True):
-        if self.isPlayingInstructions():
-            if not self.isReady():
-                return
-            self.pause = True
-            if self.instruct_idx >= len(self.instructions):
-                self.resetInstructions()
-                return
-            audio.playInstruction(self.instructions[self.instruct_idx], self.file_types[self.instruct_idx])
-            print "PLAYING INSTRUCTION : ", self.instructions[self.instruct_idx]
-            self.instruct_idx += 1 
-            return
+        # if self.isPlayingInstructions():
+        #     if not self.isReady():
+        #         return
+        #     self.pause = True
+        #     if self.instruct_idx >= len(self.instructions):
+        #         self.resetInstructions()
+        #         return
+        #     # audio.playInstruction(self.instructions[self.instruct_idx], self.file_types[self.instruct_idx])
+        #     print "PLAYING INSTRUCTION : ", self.instructions[self.instruct_idx]
+        #     self.instruct_idx += 1
+        #     return
         if i_loop:
-            self.pause = False 
-            audio.playNext()
+            self.pause = False
+            # audio.playNext()
         
     def restart(self):
         self.clear()
@@ -171,20 +177,22 @@ class Audio():
         
     def playInstructions(self, i_str_list, i_file_type=".ogg"):
         """Play the .ogg files that start with the entries in the input list of string."""
-        self.instructions.extend(list(i_str_list))
-        for cmd in i_str_list:
-            self.file_types.append(i_file_type)
-        self.playNext( i_loop=True)
+        # self.instructions.extend(list(i_str_list))
+        # for cmd in i_str_list:
+        #     self.file_types.append(i_file_type)
+        # self.playNext( i_loop=True)
         
         print "STORED INSTRUCTIONS = ", self.instructions, "NEW INSTRUCT = ", i_str_list
     
     def playClick(self):
-        audio.playClick()
-    
+        # audio.playClick()
+        pass
+
     def update(self, i_channel_config, i_loop=True):
         """Return true when ready to play new sequence of letters/instruction"""
         (is_read_next, is_update_time, is_first_letter) = (False, False, False)
-        if np.abs(self.cur_time) < 1E-6: 
+
+        if np.abs(self.cur_time) < 1E-6:
             self.letter_start = time.time()
         if self.isPlayingInstructions(): 
             if audio.isReady(): 
@@ -192,20 +200,46 @@ class Audio():
             return (is_read_next, is_update_time, is_first_letter)
         if self.pause:
             is_first_letter = True
+
+            alphabet = i_channel_config.alphabet.getAlphabet(i_with_spaces=False, i_group=False)
+            if self.sound_index > len(alphabet) - 1:
+                letter = None
+            else:
+                letter = alphabet[self.sound_index]
+
+            if self.current_letter != letter:
+                self.current_letter = letter
+                print("\n                                                                           " + str(letter))
+
             if audio.isReady():
                 self.playNext(i_loop)
+
             return (is_read_next, is_update_time, is_first_letter)
         letter_times = i_channel_config.getSoundTimes() 
         self.updateCurTime(i_channel_config)
         is_update_time = True
+
+        if self.clock_time >= letter_times[self.sound_index][1]:
+            alphabet = i_channel_config.alphabet.getAlphabet(i_with_spaces=False, i_group=False)
+            if self.sound_index > len(alphabet)-1:
+                letter = alphabet[0]
+            else:
+                letter = alphabet[self.sound_index]
+
+            if self.current_letter != letter:
+                self.current_letter = letter
+                print("\n                                                                           " + str(letter))
+                # print(self.clock_time, letter_times[self.sound_index][1])
+
         if self.clock_time >= letter_times[self.sound_index][1]:
             if self.sound_index >= (len(letter_times) - 1):
                 is_read_next = True
                 return (is_read_next, is_update_time, is_first_letter)
             else:
-                self.playNext()
                 self.sound_index += 1
+                self.playNext()
                 self.dispNewSound(i_channel_config, i_disp_new_sound=False, i_channel=None)
+
         return (is_read_next, is_update_time, is_first_letter)
     
     def readTime(self, i_channel_config):
@@ -213,23 +247,23 @@ class Audio():
         self.read_time = self.clock_time
         print " Cur time = ", self.cur_time, " Clock time = ", self.clock_time, " s", " should be approx ", est_read_time, " s"
         
-    def updateCurTime(self, i_channel_config): 
+    def updateCurTime(self, i_channel_config):
         self.clock_time = time.time() - self.letter_start
         letter_times = i_channel_config.getSoundTimes() 
         cur_letter_times = np.array(audio.getCurLetterTimes()) / 1000.0 
         idx = np.nonzero(cur_letter_times > -1E-12)[0]
-        if len(idx) > 0: 
-            self.cur_time = np.mean(letter_times[idx,0] + cur_letter_times[idx]) 
+        if len(idx) > 0:
+            # self.cur_time = np.mean(letter_times[idx,0] + cur_letter_times[idx])
             sound_idx = idx[-1]
             if not idx[-1] == self.sound_index:
                 self.dispCurTime(i_channel_config, cur_letter_times, i_disp_cur_time=True)
                 print "sound_index = ", self.sound_index, " index = ", idx[-1]     
-                raise ValueError("Idx not equal!!!")
+                # raise ValueError("Idx not equal!!!")
         else:  
             self.cur_time = self.clock_time
         if np.abs(self.cur_time - self.clock_time) > 0.1:
             self.dispCurTime(i_channel_config, cur_letter_times, i_disp_cur_time=True) 
-            raise ValueError("Clock time and current time out of sync!!!")
+            # raise ValueError("Clock time and current time out of sync!!!")
         self.dispCurTime(i_channel_config, cur_letter_times, i_disp_cur_time=False)    
             
     ######################################### Display diagnostic
@@ -249,15 +283,16 @@ class Audio():
                 return    
         click_times = i_channel_config.getClickTimes()
         n_ticks = i_channel_config.getNumberOfPreTicks()
+        n_ticks = 0
         click_time_idx = self.sound_index - n_ticks
         if click_time_idx < 0:
             click_time_idx = 0
         #print "***************************************************************************"
-        print "Finished with: sound index=%.2d, letter=%s " % (self.sound_index, letter), 
+        print "Finished with: sound index=%.2d, letter=%s " % (self.sound_index, letter),
         print " cur time=%2.3f, clock_time%2.3f, diff=%2.3f" % (self.cur_time, self.clock_time, self.clock_time-self.cur_time),
         print " start_time=%2.3f, end_time=%2.3f" % (letter_times[self.sound_index][0],letter_times[self.sound_index][1]),
         print " click_time=%2.3f" % click_times[click_time_idx]
-         
+
     def dispCurTime(self, i_channel_config, i_cur_letter_times, i_disp_cur_time=False):
         if not i_disp_cur_time:
             return 
@@ -267,6 +302,6 @@ class Audio():
         disp_str = "index=%d of %d, letter=%s, start time=%2.4f, end time=%2.4f," % (self.sound_index,
             len(letter_times), letter, letter_times[self.sound_index][0], letter_times[self.sound_index][1])
         disp_str += (" cur_time=%.3f, clock_time=%.3f" % (self.cur_time, self.clock_time))
-        print disp_str, 
-        print " ", i_cur_letter_times
+        # print disp_str,
+        # print " ", i_cur_letter_times
        

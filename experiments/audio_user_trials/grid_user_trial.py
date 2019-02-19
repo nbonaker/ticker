@@ -1,8 +1,9 @@
  
 from PyQt4 import QtCore, QtGui
 import sys, os, copy
-sys.path.append("../../")
+
 from grid import GridGui
+sys.path.append("../../")
 from utils import Utils 
 import numpy as np
 import time, cPickle, shutil
@@ -14,7 +15,7 @@ phrase_start = 0
 user=4
 session=5 #The user will write in various sessions
 sub_session=2
-synthetic_noise=True#Add some synthetic noise to the keyboard event.
+synthetic_noise=False#Add some synthetic noise to the keyboard event.
 
 class GridGuiExperiment(GridGui):
     
@@ -42,9 +43,11 @@ class GridGuiExperiment(GridGui):
         #Start the experiment
         self.loadPhrase() 
         self.initialised = True
+
+        self.letter_highlight = None
     
     def initDirectories(self):
-        self.root_dir = "../../../user_trials/audio_experiment/grid/"
+        self.root_dir = "/home/nicholasbonaker/PycharmProjects/ticker/experiments/audio_user_trials"
         self.phrase_file = "phrases.txt"
         if not os.path.exists(self.root_dir):
             os.mkdir(self.root_dir)
@@ -97,6 +100,10 @@ class GridGuiExperiment(GridGui):
             self.generateFalsePositives()
         if is_update_time:
             self.processFalsePositive()
+
+        if self.letter_highlight != self.audio.current_letter:
+            self.letter_highlight = self.audio.current_letter
+            self.letter_grid.highlight(self.letter_highlight)
             
     def pauseSlot(self, i_checked):
         if i_checked: 

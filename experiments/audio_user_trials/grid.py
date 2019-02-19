@@ -1,11 +1,14 @@
 #! /usr/bin/env python
 
 import sys, os,time, shutil, copy
-sys.path.append("../../")   
+from ticker_audio import Audio
+os.chdir("/home/nicholasbonaker/PycharmProjects/ticker/experiments/audio_user_trials")
+sys.path.append("../../")
 import numpy as np
 from PyQt4 import QtCore, QtGui,QtNetwork 
 from grid_layout import Ui_MainWindow
-from ticker_audio import Audio 
+from dtree import DTree
+
 from utils import Utils
 from ticker_widgets import InstructionsDisplay,SentenceDisplay
 from grid_config import ChannelConfig
@@ -13,8 +16,21 @@ from grid_config import ChannelConfig
 class GridGui(QtGui.QMainWindow, Ui_MainWindow):
     ##################################### Init
     def __init__(self):  
-        t=time.time() 
-        QtGui.QMainWindow.__init__(self)  
+        t=time.time()
+
+        file_name = "/home/nicholasbonaker/PycharmProjects/ticker/dictionaries/nomon_dict.txt"
+        file_handle = open(file_name, 'r')
+
+        # dictionary tree
+        self.prefix = ''
+        self.dt = DTree(file_handle, None)
+
+        file_handle.close()
+
+        self.setAlphaDirctories()
+
+
+        QtGui.QMainWindow.__init__(self)
         self.setupUi(self)
         self.utils = Utils()
         #######################################################################
@@ -29,11 +45,11 @@ class GridGui(QtGui.QMainWindow, Ui_MainWindow):
         #Widget  instantiation
         #######################################################################
         self.cur_dir = os.path.dirname(os.path.abspath(__file__)) + "/"
-        self.config_dir =   self.cur_dir + "grid_config/" 
+        self.config_dir =   self.cur_dir + "grid_config/"
         self.audio = Audio(i_root_dir=self.config_dir)
         self.instructions_display = InstructionsDisplay(self.label_instructions, self.centralwidget, i_title=None)
         self.sentence_display = SentenceDisplay(self.selected_words_disp, self.centralwidget, i_title=None)
-        self.channel_config  = ChannelConfig(scan_delay,self.config_dir)
+        self.channel_config  = ChannelConfig(self, scan_delay,self.config_dir)
         #Main time calls update audio
         self.main_timer = QtCore.QTimer()
         #Best timer: after the alphabet has been played to the user, this time interval will pass before starting again
@@ -44,7 +60,7 @@ class GridGui(QtGui.QMainWindow, Ui_MainWindow):
         #Complete initialisation of separate components, and connects all signals
         #######################################################################
         self.setSliderLabel(scan_delay*10.0) 
-        self.audio.setTicks(1)   #The number tick sounds before playing the alphabet 
+        self.audio.setTicks(1)   #The number tick sounds before playing the alphabet
         #Pause/play
         self.restart = True
         self.hideRecordingWidgets()
@@ -53,7 +69,74 @@ class GridGui(QtGui.QMainWindow, Ui_MainWindow):
         self.initDisplayForNewWord()
         self.setInstructLetterSelectStr() 
         self.__connectSignals()
-        
+
+    def setAlphaDirctories(self):
+        base_keys = np.array(list('abcdefghijklmnopqrstuvwxyz.,?_$#'))
+
+        num_words = 17
+        words = self.dt.get_top_words(self.prefix, 'abcdefghijklmnopqrstuvwxyz', num_words)
+        self.key_grid = np.append(base_keys, words)
+
+        num_keys = self.key_grid.size
+        closest_sq = int(np.round(np.sqrt(num_keys) - 0.51, 0)) + 1
+        self.key_grid.resize(closest_sq ** 2)
+        self.key_grid = self.key_grid.reshape(closest_sq, closest_sq)
+
+        num_cols = closest_sq
+        self.row_scan = ''
+        for key in self.key_grid[0]:
+            self.row_scan += key
+            if key != self.key_grid[0][-1]:
+                self.row_scan += '-'
+
+        self.col_scans = []
+        for i in range(num_cols):
+            col_scan = ''
+            for key in self.key_grid.T[i]:
+                col_scan += key
+                if key != self.key_grid.T[i][-1]:
+                    col_scan += '-'
+            if col_scan[-1] == '-':
+                col_scan = col_scan[:-1]
+            self.col_scans += [col_scan]
+
+        print self.key_grid
+        print self.row_scan
+        print self.col_scans
+
+        path = "grid_config/config"
+        shutil.rmtree(path)
+
+        os.mkdir(path)
+        path = "grid_config/config/row_scan"
+        os.mkdir(path)
+        path += "/channels1"
+        os.mkdir(path)
+
+        stereo_file = open(path + "/stereo_pos.txt", 'w')
+        stereo_file.write("0")
+        stereo_file.close()
+
+        alpha_file = open(path + "/alphabet.txt", 'w')
+        alpha_file.write(self.row_scan)
+        alpha_file.close()
+
+        for col_num in range(1, num_cols + 1):
+            path = "grid_config/config/col_scan_" + str(col_num)
+
+            os.mkdir(path)
+            path += "/channels1"
+            os.mkdir(path)
+
+            stereo_file = open(path + "/stereo_pos.txt", 'w')
+            stereo_file.write("0")
+            stereo_file.close()
+
+            alpha_file = open(path + "/alphabet.txt", 'w')
+            alpha_file.write(self.col_scans[col_num - 1])
+            alpha_file.close()
+
+
     #Reset everything - clickdistr estc
     def reset(self):
         self.audio.setAlphabetDir(self.channel_config.alphabet_dir)
@@ -100,12 +183,14 @@ class GridGui(QtGui.QMainWindow, Ui_MainWindow):
     def setColScan(self):
         self.stopTimers()
         sound_idx = self.audio.getSoundIndex(self.channel_config)
-        id = self.channel_config.alphabet.getAlphabet(i_with_spaces=False, i_group=False)[sound_idx]  
+        id = self.channel_config.alphabet.getAlphabet(i_with_spaces=False, i_group=False)[sound_idx]
         self.waitAudioReady([id])
         self.channel_config.setColScan(id)
         self.startNewScan() 
 
     def startNewScan(self):
+        self.setAlphaDirctories()
+        self.letter_grid.update_alpha()
         self.reset()
         if self.button_pause.isChecked() and (not self.main_timer.isActive()): 
             self.main_timer.start()
@@ -140,14 +225,35 @@ class GridGui(QtGui.QMainWindow, Ui_MainWindow):
             return
         alphabet = self.channel_config.alphabet.getAlphabet(i_with_spaces=False, i_group=False)
         letter = alphabet[sound_idx]
+
+        # update prefix
+        if letter == '$':
+            self.prefix = self.prefix[:-1]
+        else:
+
+            if len(letter) > 1:
+                letter = letter[(len(self.prefix)):]
+            print("PREFIX:" + self.prefix)
+
+            if letter[-1] == '_' or letter == '.' or letter == ',':
+                self.prefix = ''
+            else:
+                self.prefix += letter
+
+            letter.replace('__', "_")
+
+
         print "selected letter " , letter
-        if letter == self.delete_char: 
+        if letter == self.delete_char:
             self.deleteLastLetter()
             self.delete_cnt += 1
         elif (letter == "_") or (letter == "."):
             self.selected_word = self.processWord(letter)
         else:
             self.updateNextLetter(letter)
+
+
+
         self.setRowScan()
 
     def processWord(self, i_letter, i_play_new_word=True):
