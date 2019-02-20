@@ -1,8 +1,9 @@
 import os
-os.chdir("/home/nicholasbonaker/PycharmProjects/ticker")
 import audio, time, subprocess
 import numpy as np
- 
+
+
+
 class Audio():
     """This is the main audio module of Ticker:
         1) The C++ fmod wrapper is called to play the alphabet in multiple channels,

@@ -51,7 +51,12 @@ class ChannelConfig(FileLoader):
     ########################## Main functions
 
 
-    
+    def updateAlphabet(self):
+        self.alphabet = AlphabetLoader(self.getConfigDir())
+        self.alphabet.load(self.nchannels)
+        alphabet = self.alphabet.getAlphabet(i_with_spaces=False)
+        self.config_seq = self.parent.key_grid[0]
+
     def setLetterTimes(self, i_times):
         #The times at which the user is expected to click can be set manually
         self.letter_times = i_times

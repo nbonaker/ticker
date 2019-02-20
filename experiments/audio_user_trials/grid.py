@@ -1,8 +1,10 @@
 #! /usr/bin/env python
 
 import sys, os,time, shutil, copy
+os.chdir("../../")
+print(os.getcwd())
 from ticker_audio import Audio
-os.chdir("/home/nicholasbonaker/PycharmProjects/ticker/experiments/audio_user_trials")
+os.chdir(os.getcwd()+"/experiments/audio_user_trials")
 sys.path.append("../../")
 import numpy as np
 from PyQt4 import QtCore, QtGui,QtNetwork 
@@ -18,11 +20,12 @@ class GridGui(QtGui.QMainWindow, Ui_MainWindow):
     def __init__(self):  
         t=time.time()
 
-        file_name = "/home/nicholasbonaker/PycharmProjects/ticker/dictionaries/nomon_dict.txt"
+        file_name = "../../dictionaries/nomon_dict.txt"
         file_handle = open(file_name, 'r')
 
         # dictionary tree
         self.prefix = ''
+        self.prev_word = ''
         self.dt = DTree(file_handle, None)
 
         file_handle.close()
@@ -73,21 +76,29 @@ class GridGui(QtGui.QMainWindow, Ui_MainWindow):
     def setAlphaDirctories(self):
         base_keys = np.array(list('abcdefghijklmnopqrstuvwxyz.,?_$#'))
 
-        num_words = 17
+        num_words = 24
         words = self.dt.get_top_words(self.prefix, 'abcdefghijklmnopqrstuvwxyz', num_words)
         self.key_grid = np.append(base_keys, words)
 
         num_keys = self.key_grid.size
         closest_sq = int(np.round(np.sqrt(num_keys) - 0.51, 0)) + 1
         self.key_grid.resize(closest_sq ** 2)
-        self.key_grid = self.key_grid.reshape(closest_sq, closest_sq)
+        self.key_grid = self.key_grid.reshape(closest_sq, closest_sq).T
 
-        num_cols = closest_sq
+
         self.row_scan = ''
+        row_num = 0
         for key in self.key_grid[0]:
-            self.row_scan += key
-            if key != self.key_grid[0][-1]:
-                self.row_scan += '-'
+            if key == '':
+                self.key_grid = self.key_grid.T[:row_num].T
+            else:
+                self.row_scan += key
+                if key != self.key_grid[0][-1]:
+                    self.row_scan += '-'
+            row_num += 1
+        print(self.key_grid)
+        num_cols = self.key_grid.shape[1]
+
 
         self.col_scans = []
         for i in range(num_cols):
@@ -190,6 +201,7 @@ class GridGui(QtGui.QMainWindow, Ui_MainWindow):
 
     def startNewScan(self):
         self.setAlphaDirctories()
+        self.channel_config.updateAlphabet()
         self.letter_grid.update_alpha()
         self.reset()
         if self.button_pause.isChecked() and (not self.main_timer.isActive()): 
@@ -228,7 +240,11 @@ class GridGui(QtGui.QMainWindow, Ui_MainWindow):
 
         # update prefix
         if letter == '$':
-            self.prefix = self.prefix[:-1]
+            if self.prefix == '':
+                self.prefix = self.prev_word[:-1]
+            else:
+                self.prefix = self.prefix[:-1]
+
         else:
 
             if len(letter) > 1:
@@ -236,7 +252,9 @@ class GridGui(QtGui.QMainWindow, Ui_MainWindow):
             print("PREFIX:" + self.prefix)
 
             if letter[-1] == '_' or letter == '.' or letter == ',':
+                self.prev_word = self.prefix + letter
                 self.prefix = ''
+
             else:
                 self.prefix += letter
 

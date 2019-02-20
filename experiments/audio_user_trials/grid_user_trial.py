@@ -10,6 +10,10 @@ import time, cPickle, shutil
 from ticker_widgets import InstructionsDisplay
 from synthetic_noise import SyntheticNoise
 
+import warnings
+
+warnings.simplefilter('ignore')
+
 global phrase_start, user, session, sub_session, synthetic_noise
 phrase_start = 0
 user=4
