@@ -33,7 +33,7 @@ class GridGuiExperiment(GridGui):
         self.phrases = self.phrases.split('\n')
         self.phrase_cnt = phrase_start
         GridGui.__init__(self)
-        self.phrase_display = InstructionsDisplay(self.phrase_disp, self.centralwidget, i_title=None)
+        # self.phrase_display = InstructionsDisplay(self.phrase_disp, self.centralwidget, i_title=None)
         self.action_tutorial.setVisible(True)
         self.action_inc_phrases.setVisible(True)
         self.showRecordingWidgets()
@@ -82,8 +82,8 @@ class GridGuiExperiment(GridGui):
     def loadPhrase(self):
         self.initNewPhraseVariables()
         cur_phrase = self.phrases[self.phrase_cnt]
-        self.phrase_display.update(cur_phrase)
-        self.phrase_display.highLight(0)
+        # self.phrase_display.update(cur_phrase)
+        # self.phrase_display.highLight(0)
         self.updateLetterDisplay() 
         if self.initialised:
             if self.phrases[self.phrase_cnt] == ".":
@@ -191,16 +191,16 @@ class GridGuiExperiment(GridGui):
         self.adjustCursorToBeginWord()
         cur_word = self.getCurWord()
         letter_index = self.getWarpIndex()
-        if letter_index > 0:
-            self.phrase_display.highLight(letter_index) 
+        # if letter_index > 0:
+        #     self.phrase_display.highLight(letter_index)
         cur_letter = cur_word[letter_index]   
         print "IN UPDATE LETTER DIS new_word: cur_word = ", cur_word, " letter_index = ", letter_index, " current letter = " , cur_letter, 
         print " letter_offset = ", self.letter_offset
          
     def adjustCursorToBeginWord(self):
         print "In update letter display calling highlight, letter offset = ", self.letter_offset
-        self.phrase_display.highLight(0) 
-        self.phrase_display.highLight(self.letter_offset) 
+        # self.phrase_display.highLight(0)
+        # self.phrase_display.highLight(self.letter_offset)
         
     ##################################### Save
  

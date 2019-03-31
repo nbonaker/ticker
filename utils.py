@@ -66,10 +66,11 @@ class Utils():
             return o_log_sum    
         
     def loadText(self, i_file):
-        file_name = file(i_file)
-        data = file_name.read()
-        file_name.close()
-        return data 
+        # file_name = file(i_file)
+        # data = file_name.read()
+        # file_name.close()
+        # return data
+        pass
     
     def saveText(self, i_data, i_file):
         file_name = file(i_file, "w")

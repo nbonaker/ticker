@@ -50,7 +50,7 @@ class GridGui(QtGui.QMainWindow, Ui_MainWindow):
         self.cur_dir = os.path.dirname(os.path.abspath(__file__)) + "/"
         self.config_dir =   self.cur_dir + "grid_config/"
         self.audio = Audio(i_root_dir=self.config_dir)
-        self.instructions_display = InstructionsDisplay(self.label_instructions, self.centralwidget, i_title=None)
+        # self.instructions_display = InstructionsDisplay(self.label_instructions, self.centralwidget, i_title=None)
         self.sentence_display = SentenceDisplay(self.selected_words_disp, self.centralwidget, i_title=None)
         self.channel_config  = ChannelConfig(self, scan_delay,self.config_dir)
         #Main time calls update audio
@@ -70,13 +70,13 @@ class GridGui(QtGui.QMainWindow, Ui_MainWindow):
         #Load initial settings from file
         #self.initSettings(i_settings_dir, i_settings_file)
         self.initDisplayForNewWord()
-        self.setInstructLetterSelectStr() 
+        # self.setInstructLetterSelectStr()
         self.__connectSignals()
 
     def setAlphaDirctories(self):
         base_keys = np.array(list('abcdefghijklmnopqrstuvwxyz.,?_$#'))
 
-        num_words = 24
+        num_words = 17
         words = self.dt.get_top_words(self.prefix, 'abcdefghijklmnopqrstuvwxyz', num_words)
         self.key_grid = np.append(base_keys, words)
 
@@ -166,7 +166,7 @@ class GridGui(QtGui.QMainWindow, Ui_MainWindow):
         self.undo_last_action_cnt = 0
         self.delete_cnt = 0
         self.nscans = [] 
-        self.setInstructLetterSelectStr()
+        # self.setInstructLetterSelectStr()
         self.setRowScan()
         
     def __connectSignals(self):
@@ -313,18 +313,19 @@ class GridGui(QtGui.QMainWindow, Ui_MainWindow):
         #cmd_str = self.currentLetterIndexStr()
         #self.waitAudioReady(cmd_str)
         self.repeat_count=0
-        self.setInstructLetterSelectStr()
+        # self.setInstructLetterSelectStr()
 
     def playCurrentLetterIndex(self, i_cmd_str=[]):
         cmd_str = self.currentLetterIndexStr(i_cmd_str)
         self.audio.playInstructions(cmd_str) 
         
     def currentLetterIndexStr(self, i_cmd_str=[]):
-        cmd_str = list(i_cmd_str)
-        letter_idx = self.instructions_display.letter_dict[self.letter_idx + 1]
-        cmd_str.extend(letter_idx.split(" "))
-        cmd_str.append("letter")
-        return cmd_str
+        # cmd_str = list(i_cmd_str)
+        # letter_idx = self.instructions_display.letter_dict[self.letter_idx + 1]
+        # cmd_str.extend(letter_idx.split(" "))
+        # cmd_str.append("letter")
+        # return cmd_str
+        return 0
        
     def processAlphabetRepetions(self):
         #Process the number of times the alphabet sequence has been repeated when no clicks were received 
@@ -473,13 +474,13 @@ class GridGui(QtGui.QMainWindow, Ui_MainWindow):
     #################################### Show/Hide recordings widgets
     
     def hideRecordingWidgets(self):
-        self.phrase_disp.hide()
-        self.label_phrases.hide()
+        # self.phrase_disp.hide()
+        # self.label_phrases.hide()
         self.action_inc_phrases.setVisible(False)
     
     def showRecordingWidgets(self):
-        self.phrase_disp.show()
-        self.label_phrases.show()
+        # self.phrase_disp.show()
+        # self.label_phrases.show()
         self.action_inc_phrases.setVisible(True)
         
   
